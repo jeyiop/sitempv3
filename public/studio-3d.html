@@ -754,6 +754,23 @@ body[data-ui-theme="day"] .viewport::after {
     padding: 5px 10px;
   }
 }
+
+.brief-textarea{width:100%;min-height:120px;resize:vertical;border:1px solid rgba(255,255,255,0.2);border-radius:8px;background:rgba(255,255,255,0.07);color:#fff;font-family:var(--font);font-size:13px;font-weight:600;padding:10px;outline:none;margin-top:8px;}
+.brief-textarea::placeholder{color:rgba(255,255,255,0.5);font-weight:600;}
+.brief-textarea:focus{border-color:var(--accent);}
+.btn-send-devis{width:100%;padding:11px;border-radius:8px;border:none;background:var(--accent);color:#000;font-family:var(--font);font-size:13px;font-weight:800;cursor:pointer;margin-top:8px;text-transform:uppercase;letter-spacing:1px;transition:opacity 0.2s;}
+.btn-send-devis:hover{opacity:0.85;}
+.btn-ia{width:100%;padding:11px;border-radius:8px;border:none;background:linear-gradient(135deg,#7C3AED,#DB2777);color:#fff;font-family:var(--font);font-size:13px;font-weight:800;cursor:pointer;margin-top:6px;text-transform:uppercase;letter-spacing:1px;box-shadow:0 4px 16px rgba(124,58,237,0.45);transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-ia:hover{box-shadow:0 6px 24px rgba(124,58,237,0.65);transform:translateY(-1px);}
+.btn-ia:disabled{opacity:0.6;cursor:wait;transform:none;}
+.ia-proposals{display:none;margin-top:10px;}
+.ia-proposals.show{display:block;}
+.ia-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.18);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;}
+.ia-card:hover{background:rgba(124,58,237,0.2);border-color:#7C3AED;transform:translateX(3px);}
+.ia-card.selected{background:rgba(124,58,237,0.25);border-color:#7C3AED;box-shadow:0 0 16px rgba(124,58,237,0.4);}
+.ia-card-title{font-size:13px;font-weight:800;color:#fff;margin-bottom:4px;}
+.ia-card-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:6px;}
+.ia-card-desc{font-size:11px;color:rgba(255,255,255,0.75);font-weight:600;line-height:1.4;}
 </style>
 </head>
 <body>
@@ -964,6 +981,14 @@ body[data-ui-theme="day"] .viewport::after {
               <input class="quote-input" id="qDeliveryPlace" type="text" placeholder="Lieu de livraison">
               <input class="quote-input" id="qDeadline" type="date" placeholder="Deadline livraison">
             </div>
+          <div class="ctrl-card" style="margin-top:8px;">
+            <div class="ctrl-title">Brief projet</div>
+            <textarea class="brief-textarea" id="qBrief" placeholder="Secteur, produits, quantite, ambiance, contraintes..."></textarea>
+            <button class="btn-send-devis" onclick="sendDevis()">RECEVOIR MON DEVIS</button>
+            <button class="btn-ia" id="btnIA" onclick="iaInspire()"><span>&#10024;</span><span>IA : Inspire-moi</span></button>
+            <div class="ia-proposals" id="iaProposals"></div>
+          </div>
+        </div>
           </div>
         </div>
 
@@ -1985,6 +2010,71 @@ function animate() {
 }
 
 buildPLV(); updatePlvUI(); onResize(); animate();
+
+window.sendDevis = function() {
+  var rows = [
+    ['Societe', 'qCompany'], ['Telephone','qPhone'], ['Description','qProductDesc'],
+    ['Quantite','qQty'], ['Conditionnement','qConditioning'], ['Livraison','qDeliveryPlace'],
+    ['Deadline','qDeadline'], ['Brief','qBrief']
+  ].map(function(r){ var el=document.getElementById(r[1]); return el&&el.value.trim()?r[0]+': '+el.value:''; })
+   .filter(Boolean);
+  if (rows.length < 2) { showToast('Remplissez au moins vos coordonnees et le brief.'); return; }
+  window.open('mailto:jeremy@multi-poles.net?subject=Demande devis PLV Packaging Multipoles&body='+rows.join('%0A'), '_blank');
+  showToast('Ouverture messagerie...');
+};
+var TLBL = {pharma:'Pharma',pharma_clair:'Pharma clair',cosmetique:'Cosmetique',sunset:'Warm pro',cobalt:'Tech cobalt',jour_neutre:'Jour neutre',tech:'Tech',neutral:'Studio neutre'};
+window.iaInspire = async function() {
+  var el = document.getElementById('qBrief');
+  var brief = el ? el.value.trim() : '';
+  if (!brief) { showToast('Decrivez votre projet dans le brief.'); return; }
+  var btn=document.getElementById('btnIA'), panel=document.getElementById('iaProposals');
+  btn.disabled=true; btn.innerHTML='<span>&#8987;</span><span>Analyse en cours...</span>';
+  panel.classList.remove('show'); panel.innerHTML='';
+  try {
+    var res = await fetch('/api/studio/ai-propose',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({brief:brief})});
+    var data = await res.json();
+    if (!res.ok||!data.proposals) throw new Error(data.error||'Erreur IA');
+    panel.innerHTML = data.proposals.map(function(p,i){
+      var sp=JSON.stringify(p).replace(/"/g,String.fromCharCode(39));
+      return '<div class="ia-card" onclick="applyIAProposal('+i+')" data-proposal=''+sp+''>'+
+        '<div class="ia-card-type">'+(p.type==='plv'?'PLV de sol':'Packaging')+' &middot; '+(TLBL[p.theme]||p.theme)+'</div>'+
+        '<div class="ia-card-title">'+p.titre+'</div>'+
+        '<div class="ia-card-desc">'+p.description+'</div></div>';
+    }).join('');
+    panel.classList.add('show');
+    showToast('3 propositions generees - cliquez pour configurer !');
+  } catch(e) { showToast('Erreur : '+e.message); }
+  finally { btn.disabled=false; btn.innerHTML='<span>&#10024;</span><span>IA : Inspire-moi</span>'; }
+};
+window.applyIAProposal = function(i) {
+  var cards=document.querySelectorAll('.ia-card');
+  cards.forEach(function(c,j){c.classList.toggle('selected',j===i);});
+  var p=JSON.parse(cards[i].dataset.proposal.replace(/'/g,'"')), c=p.config;
+  if(p.theme) window.applyVisualPreset(p.theme);
+  var set=function(id,v){var e=document.getElementById(id);if(e)e.value=v;};
+  if(p.type==='plv'){
+    window.setMode('plv');
+    if(c.prodW){S.prodW=c.prodW;set('slPersoW',c.prodW);}
+    if(c.prodD){S.prodD=c.prodD;set('slPersoD',c.prodD);}
+    if(c.prodH){S.prodH=c.prodH;set('slPersoH',c.prodH);}
+    if(c.facing) S.facing=c.facing;
+    if(c.prodDepth) S.prodDepth=c.prodDepth;
+    if(c.nbShelves) S.nbShelves=c.nbShelves;
+    if(c.baseH){S.baseH=c.baseH;set('slBase',c.baseH);}
+    if(c.frontonH){S.frontonH=c.frontonH;set('slDimF',c.frontonH);}
+    rebuildPLV();
+  } else {
+    window.setMode('pack');
+    if(c.boxW){P.boxW=c.boxW;set('slBoxW',c.boxW);}
+    if(c.boxD){P.boxD=c.boxD;set('slBoxD',c.boxD);}
+    if(c.boxH){P.boxH=c.boxH;set('slBoxH',c.boxH);}
+    if(c.printType) P.printType=c.printType;
+    if(c.finish) P.finish=c.finish;
+    if(c.paper) P.paper=c.paper;
+    rebuildPack();
+  }
+  showToast('Configuration appliquee - personnalisez les details !');
+};
 </script>
 </body>
 </html>
