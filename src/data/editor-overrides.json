@@ -1,0 +1,70 @@
+{
+  "imageOverrides": {
+    "header-logo": "/image/selecta/logo/logo-A.png",
+    "hero-0": "/api/media/serve?path=header%2Fad31d6de-698d-4d50-a880-7a12f559d333.png",
+    "hero-1": "/image/selecta/hero/hero-07.png",
+    "hero-2": "/api/media/serve?path=Cosmetique%2F20_Gemini_Generated_Image_nl0elnl0elnl0eln.png",
+    "hero-3": "/api/media/serve?path=header%2F2026-02-09%2002.13.36.jpg",
+    "hero-4": "/api/media/serve?path=header%2Fc7426dcf-dda4-48c7-855b-feda4b725718.png",
+    "hero-5": "/api/media/serve?path=header%2Fffc02601-a99b-46f7-8701-5102aaa975b7.png",
+    "hero-6": "/api/media/serve?path=header%2Fb1d1174a-f0ef-415d-8f94-adc9d3e6d4cd.png",
+    "solution-print": "/api/media/serve?path=header%2Fc7426dcf-dda4-48c7-855b-feda4b725718.png",
+    "solution-packaging": "/image/selecta/hero/hero-07.png",
+    "solution-plv": "/api/media/serve?path=Kraft%20Style%2F10_Gemini_Generated_Image_bzmqjkbzmqjkbzmq.png",
+    "vitrine-v1": "/api/media/serve?path=Base%20de%20donn%C3%A9e%20photo%20reel%2FPLV%2FSOL%2FSEBA-MED%20x2.jpg",
+    "vitrine-v2": "/api/media/serve?path=Base%20de%20donn%C3%A9e%20photo%20reel%2FPLV%2FCOMPTOIR%2FINNOXA-ESSENTIEL_FACE.jpg",
+    "vitrine-v3": "/api/media/serve?path=header%2F2026-02-06%2013.15.58.jpg",
+    "vitrine-v4": "/image/selecta/hero/hero-04.jpg"
+  },
+  "textOverrides": {
+    "hero-title-6": "MULTIPÔLES                        G.I.E"
+  },
+  "imageTransforms": {
+    "hero-0": {
+      "scale": 1,
+      "x": 0,
+      "y": 0
+    },
+    "hero-1": {
+      "scale": 1,
+      "x": 0,
+      "y": 0
+    },
+    "header-logo": {
+      "scale": 1,
+      "x": 0,
+      "y": 0
+    },
+    "hero-5": {
+      "scale": 1,
+      "x": -3.0877192982456143,
+      "y": 50
+    },
+    "hero-3": {
+      "scale": 1,
+      "x": 0,
+      "y": 0
+    },
+    "solution-packaging": {
+      "scale": 1,
+      "x": 0,
+      "y": 0
+    },
+    "solution-digital": {
+      "scale": 1,
+      "x": 0,
+      "y": 0
+    },
+    "hero-4": {
+      "scale": 1,
+      "x": 0,
+      "y": 0
+    },
+    "vitrine-v2": {
+      "scale": 1,
+      "x": 0,
+      "y": 0
+    }
+  },
+  "heroLayouts": {}
+}

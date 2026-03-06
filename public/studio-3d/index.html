@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multipoles 3D Studio — PLV & Packaging</title>
+  <script type="module" crossorigin src="./assets/index-BBZ5iKRQ.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CmOa0wOR.css">
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">M</div>
+      <div class="logo-text">
+        <h1>Multipoles 3D Studio</h1>
+        <p>PLV & Packaging Builder</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn-params" id="btnParams" onclick="toggleParams()">Parametres avances</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="viewport">
+      <canvas id="canvas3d"></canvas>
+
+      <!-- ══════ LEFT PANEL ══════ -->
+      <div class="controls-left">
+
+        <!-- Mode toggle -->
+        <div class="ctrl-card" style="padding: 10px;">
+          <div class="mode-toggle">
+            <button class="mode-btn active" id="btnModePLV" onclick="setMode('plv')">
+              <span class="mode-icon">&#9638;</span>
+              <span class="mode-label">PLV</span>
+            </button>
+            <button class="mode-btn" id="btnModePack" onclick="setMode('pack')">
+              <span class="mode-icon">&#9634;</span>
+              <span class="mode-label">Packaging</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── PLV LEFT ── -->
+        <div id="plvLeft">
+          <div class="ctrl-card synthesis-card">
+            <div class="synth-label">PLV DE SOL</div>
+            <div class="synth-number" id="totalCap">64</div>
+            <div class="synth-prodlabel">produits</div>
+            <div class="synth-dims" id="synthDims">400 x 400 x 1791 mm</div>
+            <div class="synth-detail" id="synthDetail">4 facing x 4 prof. x 4 etageres</div>
+          </div>
+
+          <div class="ctrl-card">
+            <div class="ctrl-title">Produits par etagere</div>
+            <div class="stepper">
+              <span class="stepper-label">Facing</span>
+              <div class="stepper-controls">
+                <button class="stepper-btn" onclick="step('facing',-1)">&minus;</button>
+                <div class="stepper-val"><span id="vFacing">4</span></div>
+                <button class="stepper-btn" onclick="step('facing',1)">+</button>
+              </div>
+            </div>
+            <div class="stepper">
+              <span class="stepper-label">Profondeur</span>
+              <div class="stepper-controls">
+                <button class="stepper-btn" onclick="step('prodDepth',-1)">&minus;</button>
+                <div class="stepper-val"><span id="vProdDepth">4</span></div>
+                <button class="stepper-btn" onclick="step('prodDepth',1)">+</button>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-perso" id="btnPerso" onclick="togglePerso()">Personnaliser les dimensions de votre produit</button>
+
+          <div class="ctrl-card perso-panel" id="persoPanel">
+            <div class="ctrl-title">Presets flacons</div>
+            <div class="perso-presets">
+              <button class="preset-btn" onclick="applyPreset(30,30,80)">20ml</button>
+              <button class="preset-btn" onclick="applyPreset(40,40,100)">50ml</button>
+              <button class="preset-btn active" onclick="applyPreset(50,50,120)">100ml</button>
+              <button class="preset-btn" onclick="applyPreset(60,60,140)">200ml</button>
+            </div>
+            <div class="ctrl-title" style="margin-top:10px">Sur mesure</div>
+            <div class="slider-field">
+              <div class="slider-header"><span class="slider-label">Largeur</span>
+                <span class="slider-value"><span id="ppW">100</span><span class="unit">mm</span></span></div>
+              <input type="range" id="slPersoW" min="20" max="200" step="5" value="100">
+            </div>
+            <div class="slider-field">
+              <div class="slider-header"><span class="slider-label">Profondeur</span>
+                <span class="slider-value"><span id="ppD">100</span><span class="unit">mm</span></span></div>
+              <input type="range" id="slPersoD" min="20" max="200" step="5" value="100">
+            </div>
+            <div class="slider-field">
+              <div class="slider-header"><span class="slider-label">Hauteur</span>
+                <span class="slider-value"><span id="ppH">225</span><span class="unit">mm</span></span></div>
+              <input type="range" id="slPersoH" min="30" max="300" step="5" value="225">
+            </div>
+          </div>
+        </div>
+
+        <!-- ── PACKAGING LEFT ── -->
+        <div id="packLeft" class="hidden">
+          <div class="ctrl-card pack-synth">
+            <div class="synth-label">PACKAGING</div>
+            <div class="pack-synth-dims" id="packDimsDisplay">50 x 50 x 150 mm</div>
+            <div class="pack-synth-sub" id="packSynthSub">Offset | Mat</div>
+          </div>
+
+          <div class="ctrl-card">
+            <div class="ctrl-title">Dimensions etui</div>
+            <div class="perso-presets" style="margin-bottom:8px">
+              <button class="preset-btn" onclick="packPreset(30,30,80)">20ml</button>
+              <button class="preset-btn" onclick="packPreset(40,40,100)">50ml</button>
+              <button class="preset-btn active" onclick="packPreset(50,50,150)">100ml</button>
+              <button class="preset-btn" onclick="packPreset(60,60,180)">200ml</button>
+            </div>
+            <div class="slider-field">
+              <div class="slider-header"><span class="slider-label">Largeur</span>
+                <span class="slider-value"><span id="bW">50</span><span class="unit">mm</span></span></div>
+              <input type="range" id="slBoxW" min="20" max="150" step="1" value="50">
+            </div>
+            <div class="slider-field">
+              <div class="slider-header"><span class="slider-label">Profondeur</span>
+                <span class="slider-value"><span id="bD">50</span><span class="unit">mm</span></span></div>
+              <input type="range" id="slBoxD" min="20" max="150" step="1" value="50">
+            </div>
+            <div class="slider-field">
+              <div class="slider-header"><span class="slider-label">Hauteur</span>
+                <span class="slider-value"><span id="bH">150</span><span class="unit">mm</span></span></div>
+              <input type="range" id="slBoxH" min="30" max="300" step="1" value="150">
+            </div>
+          </div>
+
+          <div class="ctrl-card">
+            <div class="ctrl-title">Construction</div>
+            <div class="tags-wrap" id="tagsConstruction">
+              <span class="tag active" data-val="patte-alternee">Patte alternee</span>
+              <span class="tag" data-val="patte-opposee">Patte opposee</span>
+              <span class="tag active" data-val="fond-semi-auto">Fond semi-auto</span>
+              <span class="tag" data-val="fond-auto">Fond automatique</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════ RIGHT PANEL ══════ -->
+      <div class="controls-right">
+
+        <!-- ── PLV RIGHT ── -->
+        <div id="plvRight">
+          <div class="ctrl-card">
+            <div class="ctrl-title">Etageres</div>
+            <div class="stepper">
+              <span class="stepper-label">Nombre</span>
+              <div class="stepper-controls">
+                <button class="stepper-btn" onclick="step('nbShelves',-1)">&minus;</button>
+                <div class="stepper-val"><span id="vShelves">4</span></div>
+                <button class="stepper-btn" onclick="step('nbShelves',1)">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="ctrl-card">
+            <div class="ctrl-title">Dimensions du presentoir</div>
+            <div class="slider-field">
+              <div class="slider-header"><span class="slider-label">Largeur</span>
+                <span class="slider-value"><span id="dW">400</span><span class="unit">mm</span></span></div>
+              <input type="range" id="slDimW" min="50" max="2000" step="1" value="400">
+            </div>
+            <div class="slider-field">
+              <div class="slider-header"><span class="slider-label">Profondeur</span>
+                <span class="slider-value"><span id="dD">400</span><span class="unit">mm</span></span></div>
+              <input type="range" id="slDimD" min="50" max="1500" step="1" value="400">
+            </div>
+            <div class="slider-field">
+              <div class="slider-header"><span class="slider-label">Hauteur</span>
+                <span class="slider-value"><span id="dH">1441</span><span class="unit">mm</span></span></div>
+              <input type="range" id="slDimH" min="300" max="2500" step="1" value="1441">
+            </div>
+            <div class="slider-field">
+              <div class="slider-header"><span class="slider-label">Fronton</span>
+                <span class="slider-value"><span id="dF">350</span><span class="unit">mm</span></span></div>
+              <input type="range" id="slDimF" min="100" max="600" step="10" value="350">
+            </div>
+          </div>
+        </div>
+
+        <!-- ── PACKAGING RIGHT ── -->
+        <div id="packRight" class="hidden">
+          <div class="ctrl-card">
+            <div class="ctrl-title">Impression</div>
+            <div class="option-group" id="grpPrint">
+              <button class="option-btn active" data-val="offset">Offset</button>
+              <button class="option-btn" data-val="numerique">Numerique</button>
+              <button class="option-btn" data-val="serigraphie">Serigraphie</button>
+            </div>
+          </div>
+          <div class="ctrl-card">
+            <div class="ctrl-title">Finition</div>
+            <div class="option-group" id="grpFinish">
+              <button class="option-btn active" data-val="mat">Mat</button>
+              <button class="option-btn" data-val="brillant">Brillant</button>
+              <button class="option-btn" data-val="satine">Satine</button>
+            </div>
+            <div class="ctrl-title" style="margin-top:10px">Matiere</div>
+            <div class="option-group" id="grpPaper">
+              <button class="option-btn active" data-val="blanc-blanc">Blanc / Blanc</button>
+              <button class="option-btn" data-val="blanc-bois">Blanc / Bois</button>
+            </div>
+          </div>
+          <div class="ctrl-card">
+            <div class="ctrl-title">Nombre de couleurs</div>
+            <div class="color-btns" id="grpColors">
+              <button class="color-btn" data-val="1">1</button>
+              <button class="color-btn" data-val="2">2</button>
+              <button class="color-btn" data-val="3">3</button>
+              <button class="color-btn active" data-val="4">4</button>
+              <button class="color-btn" data-val="5">5+</button>
+            </div>
+          </div>
+          <div class="ctrl-card">
+            <div class="ctrl-title">Options luxe</div>
+            <div class="check-list" id="grpLuxe">
+              <div class="check-item" data-val="dorure" onclick="toggleCheck(this)">
+                <div class="check-box">&#10003;</div><span>Dorure a chaud</span></div>
+              <div class="check-item" data-val="embossage" onclick="toggleCheck(this)">
+                <div class="check-box">&#10003;</div><span>Embossage</span></div>
+              <div class="check-item" data-val="vernis" onclick="toggleCheck(this)">
+                <div class="check-box">&#10003;</div><span>Vernis selectif</span></div>
+              <div class="check-item" data-val="pelliculage" onclick="toggleCheck(this)">
+                <div class="check-box">&#10003;</div><span>Pelliculage</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint-bar">Cliquer-glisser pour tourner | Molette pour zoomer</div>
+
+      <!-- Dieline 2D (packaging mode only) -->
+      <div id="dielineWrap" class="hidden" style="background:#0A0A0F;border-top:1px solid rgba(0,255,255,0.15);padding:10px 12px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span style="font-size:11px;font-weight:600;color:rgba(0,255,255,0.6);text-transform:uppercase;letter-spacing:2px;font-family:'Orbitron',monospace;">Plan a plat (dieline)</span>
+          <span style="font-size:9px;color:rgba(255,255,255,0.3);">Coupe <span style="color:#00FFFF;">&#9644;</span> &nbsp;Pliure <span style="color:#FF00FF;">- - -</span></span>
+        </div>
+        <canvas id="dielineCanvas" style="width:100%;border-radius:2px;background:#0A0A0F;border:1px solid rgba(0,255,255,0.08);"></canvas>
+      </div>
+    </div>
+
+    <!-- Params panel (advanced PLV) -->
+    <div class="params-panel" id="paramsPanel">
+      <button class="param-close" onclick="toggleParams()">&times;</button>
+      <div class="param-section">
+        <div class="param-title">Structure PLV</div>
+        <div class="param-field">
+          <div class="param-header"><span class="param-label">Hauteur socle</span>
+            <span class="param-value"><span id="pBase">450</span><span class="unit">mm</span></span></div>
+          <input type="range" id="slBase" min="50" max="600" step="10" value="450">
+        </div>
+        <div class="param-field">
+          <div class="param-header"><span class="param-label">Rebord etagere</span>
+            <span class="param-value"><span id="pLip">14</span><span class="unit">mm</span></span></div>
+          <input type="range" id="slLip" min="0" max="40" step="1" value="14">
+        </div>
+        <div class="param-field">
+          <div class="param-header"><span class="param-label">Marge au dessus pack</span>
+            <span class="param-value"><span id="pHead">18</span><span class="unit">mm</span></span></div>
+          <input type="range" id="slHead" min="5" max="60" step="1" value="18">
+        </div>
+      </div>
+      <div class="param-section">
+        <div class="param-title">Fronton</div>
+        <div class="param-field">
+          <div class="param-header"><span class="param-label">Forme</span>
+            <span class="param-value"><span id="pShape">Arrondi</span></span></div>
+          <input type="range" id="slShape" min="0" max="2" step="1" value="1">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+</body>
+</html>

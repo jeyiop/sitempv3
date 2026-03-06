@@ -4,15 +4,39 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowUpRight } from 'lucide-react';
-import { useRealisations } from '@/hooks/use-api';
+import { ArrowUpRight, Lightbulb, Package, Printer, Play } from 'lucide-react';
+import { useRealisations, useSolutions } from '@/hooks/use-api';
 import { RealisationCard } from '@/components/RealisationCard';
+import { EditableImage } from '@/components/EditableImage';
 import type { Realisation } from '@/types/api';
+
+const solutionVisualsBySlug: Record<string, { image: string; tags: string[] }> = {
+  plv: { image: '/image/selecta/savoir-faire/sf-plv.png', tags: ['Comptoir', 'Sol', 'Linéaire'] },
+  packaging: { image: '/image/selecta/savoir-faire/sf-packaging.png', tags: ['Etuis', 'Coffrets', 'Calages'] },
+  print: { image: '/image/selecta/savoir-faire/sf-print.png', tags: ['Offset', 'Numérique', 'Finitions'] },
+  digital: { image: '/image/selecta/savoir-faire/sf-studio.jpg', tags: ['Configuration', '3D', 'Devis'] },
+};
+
+const baseSolutionCategories = [
+  { slug: 'plv', title: 'PLV', icon: Lightbulb, description: "PLV de comptoir et PLV de sol: conception structurelle, prototypage et fabrication série.", link: '/solutions#plv' },
+  { slug: 'packaging', title: 'Packaging', icon: Package, description: 'Etuis, coffrets, sleeves et calages avec contraintes logistiques et retail intégrées.', link: '/solutions#packaging' },
+  { slug: 'print', title: 'Print', icon: Printer, description: "Impression offset/numérique, dorure, vernis sélectif, gaufrage, découpe et façonnage.", link: '/solutions#print' },
+  { slug: 'digital', title: 'Devis 3D Studio', icon: Play, description: 'Configuration 3D de votre projet et transmission directe au bureau d'études pour chiffrage.', link: '/simulateur' },
+];
 
 export default function RealisationsPage() {
   const { data: realisations, loading, error } = useRealisations('fr');
+  const { data: solutionsData, loading: solutionsLoading } = useSolutions('fr');
   const [selectedRealisation, setSelectedRealisation] = useState<Realisation | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  const displayedSolutions = baseSolutionCategories.map((base) => {
+    const match = Array.isArray(solutionsData)
+      ? solutionsData.find((s) => s?.slug?.toLowerCase() === base.slug || s?.title?.toLowerCase() === base.title.toLowerCase())
+      : null;
+    const visuals = solutionVisualsBySlug[base.slug] ?? { image: '/image/placeholder.jpg', tags: [] };
+    return { ...base, id: base.slug, image: visuals.image, tags: visuals.tags, ...(match ? { title: match.title, description: match.description } : {}) };
+  });
 
   // Filter published realisations and sort by year
   const publishedRealisations = realisations
@@ -116,6 +140,77 @@ export default function RealisationsPage() {
         </div>
       </section>
       
+      {/* Nos savoir-faire */}
+      <section className="py-20 bg-[#000B58]">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4 text-white">Nos savoir-faire</h2>
+            <p className="text-xl max-w-3xl mx-auto text-white">
+              Depuis 1996, Multi-Pôles accompagne les marques en pharmacie, parapharmacie et cosmétique :
+              conseil, création, fabrication, co-packing et déploiement terrain.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {solutionsLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-lg p-8 animate-pulse">
+                  <div className="h-12 w-12 bg-gray-200 rounded mb-4" />
+                  <div className="h-6 bg-gray-200 rounded mb-3 w-3/4" />
+                  <div className="h-16 bg-gray-200 rounded mb-4" />
+                  <div className="h-4 bg-gray-200 rounded w-1/2" />
+                </div>
+              ))
+            ) : (
+              displayedSolutions.map((solution) => {
+                const Icon = solution.icon;
+                return (
+                  <motion.div
+                    key={solution.id}
+                    whileHover={{ y: -8, scale: 1.01 }}
+                    transition={{ duration: 0.25 }}
+                    className="group relative overflow-hidden rounded-2xl bg-white/95 p-8 shadow-lg shadow-black/10 border border-white/60 text-[#000B58] transition-all duration-300 hover:-translate-y-3 hover:shadow-2xl"
+                  >
+                    <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-yellow/80 via-yellow/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="flex flex-col h-full">
+                      <div className="mb-5 overflow-hidden rounded-xl border border-[#000B58]/10 bg-[#f5f5f2]">
+                        <div className="relative aspect-[4/3] w-full">
+                          <EditableImage
+                            editorKey={`sf-real-${solution.id}`}
+                            src={solution.image}
+                            alt={solution.title}
+                            fill
+                            sizes="(max-width: 1024px) 100vw, 25vw"
+                            className="object-contain p-3"
+                          />
+                        </div>
+                      </div>
+                      <div className="mb-5 flex items-center justify-start">
+                        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow/20">
+                          <Icon className="w-6 h-6 text-[#000B58]" />
+                        </span>
+                      </div>
+                      <h3 className="text-2xl font-bold mb-3">{solution.title}</h3>
+                      <p className="text-[#000B58]/70 mb-6 flex-1 leading-relaxed">{solution.description}</p>
+                      <div className="mb-6 flex flex-wrap gap-2">
+                        {solution.tags.map((tag) => (
+                          <span key={tag} className="rounded-md border border-[#000B58]/15 bg-[#000B58]/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#000B58]/70">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                      <Link href={solution.link} className="mt-auto inline-flex items-center gap-2 text-sm font-semibold text-[#000B58] group-hover:text-yellow transition-colors">
+                        En savoir plus
+                        <span aria-hidden="true" className="text-base leading-none transition-transform duration-200 group-hover:translate-x-0.5">→</span>
+                      </Link>
+                    </div>
+                  </motion.div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section
         className="py-20 bg-navy text-white"

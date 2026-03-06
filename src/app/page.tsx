@@ -418,20 +418,20 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-white">
       {/* Hero Carousel — plein écran moins le header */}
-      <section className="relative mt-3 md:mt-4 h-[88vh] min-h-[440px] w-full overflow-hidden bg-white">
+      <section className="relative mt-6 md:mt-8 h-[74vh] min-h-[380px] w-full overflow-hidden bg-white">
         {carouselItems.map((item, index) => {
           const textGroup = getHeroTextGroup(index);
           const layoutKey = `slide-layout-${index}`;
-          const cardWidth = (heroLayouts ?? {})[layoutKey] ?? 420;
+          const cardWidth = (heroLayouts ?? {})[layoutKey] ?? 484;
           return (
             <div
               key={item?.id ?? index}
               className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
             >
-              <div className="absolute inset-0 flex items-center px-4 md:px-10 py-4">
+              <div className="absolute inset-0 flex items-center px-4 md:px-9 py-3.5">
                 <div className="w-full h-full flex items-stretch gap-3 md:gap-4">
                   {/* ── Image ── */}
-                  <div className={`flex-1 relative rounded-xl overflow-hidden bg-white ${editorMode ? 'z-30' : ''}`}>
+                  <div className={`flex-1 h-full relative rounded-xl overflow-hidden bg-white ${editorMode ? 'z-30' : ''}`}>
                     <EditableImage
                       editorKey={`hero-${index}`}
                       src={item?.imageUrl ?? '/image/placeholder.jpg'}
@@ -439,7 +439,7 @@ export default function Home() {
                       fill
                       priority={index === 0}
                       sizes="(max-width: 768px) 100vw, 66vw"
-                      className="object-contain"
+                      className="object-cover"
                     />
                   </div>
                   {/* ── Drag divider (editor only) ── */}
@@ -558,92 +558,18 @@ export default function Home() {
           ))}
         </div>
       </section>
-      {/* Reel of recent réalisations */}
-      <section className="bg-white py-20">
-        <div className="container mx-auto px-4 md:px-6 lg:px-8">
-          <div className="flex flex-col gap-8">
-            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-              <div>
-                <span className="mb-3 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-[#000B58]/70">
-                  Explorez nos réalisations
-                </span>
-                <h2 className="text-3xl md:text-4xl font-bold text-[#000B58]">
-                  Un aperçu de nos derniers projets
-                </h2>
-                <p className="mt-3 max-w-2xl text-base text-[#000B58]/70">
-                  Découvrez comment nous sublimons les marques cosmétique et pharma avec des dispositifs PLV impactants. Faites défiler pour vous inspirer.
-                </p>
-              </div>
-              <Link
-                href="/realisations"
-                className="inline-flex items-center gap-2 self-start text-sm font-semibold text-[#000B58] transition-colors hover:text-[#000B58]/70"
-              >
-                Voir toutes nos réalisations
-                <span aria-hidden="true" className="text-base leading-none transition-transform duration-200 group-hover:translate-x-0.5">
-                  →
-                </span>
-              </Link>
-            </div>
-
-            <div className="h-px w-full bg-[#000B58]/10" />
-
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {realisationsLoading ? (
-                Array.from({ length: 4 }).map((_, idx) => (
-                  <div
-                    key={idx}
-                    className="rounded-[24px] border border-[#000B58]/10 bg-white p-4 shadow-sm"
-                  >
-                    <div className="h-40 rounded-2xl bg-[#000B58]/5 animate-pulse" />
-                    <div className="mt-4 h-4 w-3/4 rounded-full bg-[#000B58]/10 animate-pulse" />
-                    <div className="mt-3 h-4 w-1/2 rounded-full bg-[#000B58]/10 animate-pulse" />
-                  </div>
-                ))
-              ) : showcaseRealisations.length === 0 ? (
-                <div className="w-full rounded-2xl border border-dashed border-[#000B58]/20 bg-[#000B58]/5 p-8 text-center text-[#000B58]/60">
-                  Aucune réalisation disponible pour le moment. Revenez bientôt pour découvrir nos projets.
-                </div>
-              ) : (
-                showcaseRealisations.map((realisation, index) => (
-                  <RealisationCard key={realisation.id ?? index} realisation={realisation} index={index} editorKey={`real-${index}`} />
-                ))
-              )}
-            </div>
-
-            <div className="flex justify-end text-sm text-[#000B58]/50">
-              <Link href="/contact" className="font-semibold text-[#000B58] hover:text-[#000B58]/70 transition-colors inline-flex items-center gap-2">
-                Discutons de votre projet
-                <span aria-hidden="true" className="text-base leading-none transition-transform duration-200 hover:translate-x-0.5">
-                  →
-                </span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Services Section */}
       <section className="py-20 bg-[#000B58]">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2
-              className="text-4xl font-bold mb-4"
-              style={{ color: '#FFFFFF' }}
-            >
-              Nos savoir-faire
-            </h2>
-            <p
-              className="text-xl max-w-3xl mx-auto"
-              style={{ color: '#FFFFFF' }}
-            >
-              Depuis 1996, Multi-Pôles accompagne les marques en pharmacie, parapharmacie et cosmétique:
+            <h2 className="text-4xl font-bold mb-4 text-white">Nos savoir-faire</h2>
+            <p className="text-xl max-w-3xl mx-auto text-white">
+              Depuis 1996, Multi-Pôles accompagne les marques en pharmacie, parapharmacie et cosmétique :
               conseil, création, fabrication, co-packing et déploiement terrain.
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {solutionsLoading ? (
-              // Loading skeleton
               Array.from({ length: 4 }).map((_, index) => (
                 <div key={index} className="bg-white rounded-lg p-8 border border-gray-100 animate-pulse">
                   <div className="h-12 w-12 bg-gray-200 rounded mb-4"></div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { useEditor } from '@/components/EditorWrapper';
 
@@ -18,6 +19,7 @@ interface EditableImageProps {
   editorKey: string; src: string; alt: string;
   fill?: boolean; className?: string;
   width?: number; height?: number; priority?: boolean; sizes?: string;
+  compact?: boolean; // désactive le panneau de contrôles (pour logo, petites images)
 }
 
 function resizeImage(file: File, maxWidth: number, quality: number): Promise<string> {
@@ -119,7 +121,7 @@ function ImageGalleryModal({ onSelect, onClose, onUpload }: { onSelect: (p: stri
 }
 
 // ─── Composant principal ─────────────────────────────────────
-export function EditableImage({ editorKey, src, alt, fill, className, width, height, priority, sizes }: EditableImageProps) {
+export function EditableImage({ editorKey, src, alt, fill, className, width, height, priority, sizes, compact }: EditableImageProps) {
   const { editorMode, imageOverrides, setImageOverride, imageTransforms, setImageTransform } = useEditor();
   const inputRef     = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -144,10 +146,12 @@ export function EditableImage({ editorKey, src, alt, fill, className, width, hei
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const t = transformRef.current;
-      const delta = -e.deltaY * 0.001;
-      const newScale = Math.max(1, Math.min(3, t.scale + delta));
+      // Normalise selon deltaMode : 0=pixel, 1=line(×30), 2=page(×300)
+      const raw = e.deltaMode === 1 ? e.deltaY * 30 : e.deltaMode === 2 ? e.deltaY * 300 : e.deltaY;
+      const delta = -raw * 0.002;
+      const newScale = Math.max(1, Math.min(4, t.scale + delta));
       const next = { scale: newScale, x: newScale <= 1 ? 0 : t.x, y: newScale <= 1 ? 0 : t.y };
-      transformRef.current = next; // update immédiat pour les events rapides
+      transformRef.current = next;
       setImageTransform(editorKey, next);
     };
     el.addEventListener('wheel', onWheel, { passive: false });
@@ -188,9 +192,18 @@ export function EditableImage({ editorKey, src, alt, fill, className, width, hei
     e.target.value = '';
   };
 
+  // ── Object-fit override ───────────────────────────────────
+  const fitKey = `${editorKey}__fit`;
+  const fitOverride = ((imageTransforms ?? {})[fitKey] as any)?.fit as 'cover' | 'contain' | undefined;
+  const objectFit = fitOverride ?? 'cover';
+  const toggleFit = () => {
+    const next = objectFit === 'cover' ? 'contain' : 'cover';
+    setImageTransform(fitKey, { scale: 1, x: 0, y: 0, fit: next } as any);
+  };
+
   // ── Image style (zoom + pan) ──────────────────────────────
   const imgStyle: React.CSSProperties = (editorMode || hasTransform) ? {
-    objectFit: 'cover',
+    objectFit: objectFit,
     objectPosition: `${50 + transform.x}% ${50 + transform.y}%`,
     transform: transform.scale !== 1 ? `scale(${transform.scale})` : undefined,
     transformOrigin: 'center',
@@ -202,7 +215,7 @@ export function EditableImage({ editorKey, src, alt, fill, className, width, hei
   const isDataUrl  = override?.startsWith('data:');
 
   const wrapperStyle: React.CSSProperties = {
-    ...(fill ? { position: 'relative', width: '100%', height: '100%' } : { display: 'inline-block' }),
+    ...(fill ? { position: 'relative', width: '100%', height: '100%', overflow: 'hidden' } : { display: 'inline-block', overflow: 'hidden' }),
     ...(editorMode && fill ? { cursor: hasTransform ? 'move' : 'crosshair' } : {}),
   };
 
@@ -224,10 +237,43 @@ export function EditableImage({ editorKey, src, alt, fill, className, width, hei
     >↺</button>
   ) : null;
 
-  // ── Hint affiché si pas de transform ─────────────────────
-  const hint = editorMode && fill && !hasTransform ? (
-    <div style={{ position: 'absolute', bottom: '6px', left: '50%', transform: 'translateX(-50%)', zIndex: 50, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: '6px', padding: '2px 8px', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
-      <span style={{ color: '#fff', fontSize: '9px', fontWeight: 600 }}>molette = zoom · glisser = recadrer · clic = changer</span>
+  // ── Panneau options éditeur ───────────────────────────────
+  const POSITIONS = [
+    { label: '↖', x: -50, y: -50 }, { label: '↑', x: 0, y: -50 }, { label: '↗', x: 50, y: -50 },
+    { label: '←', x: -50, y:   0 }, { label: '·', x: 0, y:   0 }, { label: '→', x: 50, y:   0 },
+    { label: '↙', x: -50, y:  50 }, { label: '↓', x: 0, y:  50 }, { label: '↘', x: 50, y:  50 },
+  ];
+  const hint = editorMode && fill && !compact ? (
+    <div
+      onPointerDown={e => e.stopPropagation()}
+      style={{ position: 'absolute', bottom: '8px', left: '8px', zIndex: 52, display: 'flex', flexDirection: 'column', gap: '4px' }}
+    >
+      {/* Grille position 3×3 */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 20px)', gap: '2px', backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: '7px', padding: '5px', backdropFilter: 'blur(4px)' }}>
+        {POSITIONS.map(pos => {
+          const active = Math.round(transform.x) === pos.x && Math.round(transform.y) === pos.y;
+          return (
+            <button
+              key={pos.label}
+              title={`Positionner : ${pos.label}`}
+              onClick={e => { e.stopPropagation(); setImageTransform(editorKey, { ...transform, x: pos.x, y: pos.y }); }}
+              style={{ width: '20px', height: '20px', borderRadius: '4px', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: active ? '#ffd580' : 'rgba(255,255,255,0.15)', color: active ? '#000B58' : '#fff', transition: 'all 0.1s' }}
+            >{pos.label}</button>
+          );
+        })}
+      </div>
+      {/* Cover / Contain toggle */}
+      <button
+        onClick={e => { e.stopPropagation(); toggleFit(); }}
+        title="Basculer Cover / Contain"
+        style={{ backgroundColor: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '6px', padding: '3px 7px', cursor: 'pointer', backdropFilter: 'blur(4px)', color: objectFit === 'cover' ? '#ffd580' : '#aef', fontSize: '10px', fontWeight: 700, textAlign: 'center' }}
+      >
+        {objectFit === 'cover' ? '⬛ Cover' : '⬜ Contain'}
+      </button>
+      {/* Hint zoom */}
+      <div style={{ backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: '6px', padding: '2px 6px', pointerEvents: 'none' }}>
+        <span style={{ color: '#fff', fontSize: '9px', fontWeight: 600 }}>molette=zoom · glisser=recadrer · clic=changer</span>
+      </div>
     </div>
   ) : null;
 
@@ -252,7 +298,7 @@ export function EditableImage({ editorKey, src, alt, fill, className, width, hei
           />
           {commonChildren}
         </div>
-        {showGallery && <ImageGalleryModal onSelect={handleGallerySelect} onClose={() => setShowGallery(false)} onUpload={handleFileUpload} />}
+        {showGallery && typeof document !== 'undefined' && createPortal(<ImageGalleryModal onSelect={handleGallerySelect} onClose={() => setShowGallery(false)} onUpload={handleFileUpload} />, document.body)}
       </>
     );
   }
@@ -266,7 +312,7 @@ export function EditableImage({ editorKey, src, alt, fill, className, width, hei
         />
         {commonChildren}
       </div>
-      {showGallery && <ImageGalleryModal onSelect={handleGallerySelect} onClose={() => setShowGallery(false)} onUpload={handleFileUpload} />}
+      {showGallery && typeof document !== 'undefined' && createPortal(<ImageGalleryModal onSelect={handleGallerySelect} onClose={() => setShowGallery(false)} onUpload={handleFileUpload} />, document.body)}
     </>
   );
 }

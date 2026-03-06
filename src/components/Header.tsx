@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { EditableImage } from '@/components/EditableImage';
+import { useEditor } from '@/components/EditorWrapper';
 
 import {
   NavigationMenu,
@@ -15,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 
 const Header = () => {
+  const { editorMode } = useEditor();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
@@ -109,13 +111,14 @@ const Header = () => {
         >
           {/* ── Logo ── */}
           <motion.div variants={{ hidden: { y: -12, opacity: 0 }, visible: { y: 0, opacity: 1 } }} className="flex items-center shrink-0">
-            <div className="relative flex h-14 w-40 md:h-16 md:w-52 items-center justify-center">
-              <Link href="/" className="absolute inset-0 z-20" aria-label="Accueil" />
+            <div className="relative flex h-[5.5rem] w-40 md:h-24 md:w-52 items-center justify-center">
+              {!editorMode && <Link href="/" className="absolute inset-0 z-20" aria-label="Accueil" />}
               <EditableImage
                 editorKey="header-logo"
                 src="/image/selecta/logo/logo-final.png"
                 alt="Multi-Pôles"
                 fill
+                compact
                 className="object-contain"
                 priority
               />

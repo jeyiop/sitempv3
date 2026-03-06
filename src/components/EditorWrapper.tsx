@@ -139,9 +139,18 @@ function EditorToggle() {
         </button>
       )}
 
-      {/* Export / Import */}
+      {/* Sauvegarder / Export / Import */}
       {editorMode && (
         <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={async () => {
+              const payload = { imageOverrides, textOverrides, imageTransforms, heroLayouts };
+              const res = await fetch('/api/studio/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+              if (res.ok) alert('✅ Modifications sauvegardées dans le code !');
+              else alert('❌ Erreur lors de la sauvegarde.');
+            }}
+            style={{ ...btnBase, backgroundColor: '#000B58', color: '#fff' }}
+          >💾 Sauvegarder</button>
           <button onClick={handleExport} style={{ ...btnBase, backgroundColor: '#16a34a', color: '#fff' }}>Exporter</button>
           <button onClick={() => importRef.current?.click()} style={{ ...btnBase, backgroundColor: '#7c3aed', color: '#fff' }}>Importer</button>
           <input ref={importRef} type="file" accept="application/json" style={{ display: 'none' }} onChange={handleImportFile} />
@@ -191,12 +200,25 @@ export function EditorWrapper({ children }: { children: ReactNode }) {
   const [imageTransforms, setImageTransformsState] = useState<Record<string, ImageTransform>>({});
   const [heroLayouts, setHeroLayoutsState]      = useState<Record<string, number>>({});
 
-  // ── Load from localStorage on mount ───────────────────────
+  // ── Load from server JSON (saved overrides) then localStorage ─
   useEffect(() => {
-    try { const s = localStorage.getItem(IMAGE_STORAGE_KEY);     if (s) setImageOverrides(JSON.parse(s));     } catch { /* ignore */ }
-    try { const s = localStorage.getItem(TEXT_STORAGE_KEY);      if (s) setTextOverrides(JSON.parse(s));      } catch { /* ignore */ }
-    try { const s = localStorage.getItem(TRANSFORM_STORAGE_KEY); if (s) setImageTransformsState(JSON.parse(s)); } catch { /* ignore */ }
-    try { const s = localStorage.getItem(LAYOUT_STORAGE_KEY);    if (s) setHeroLayoutsState(JSON.parse(s));    } catch { /* ignore */ }
+    fetch('/api/studio/load')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          if (data.imageOverrides)  setImageOverrides(data.imageOverrides);
+          if (data.textOverrides)   setTextOverrides(data.textOverrides);
+          if (data.imageTransforms) setImageTransformsState(data.imageTransforms);
+          if (data.heroLayouts)     setHeroLayoutsState(data.heroLayouts);
+        }
+      })
+      .catch(() => {
+        // Fallback to localStorage
+        try { const s = localStorage.getItem(IMAGE_STORAGE_KEY);     if (s) setImageOverrides(JSON.parse(s));     } catch { /* ignore */ }
+        try { const s = localStorage.getItem(TEXT_STORAGE_KEY);      if (s) setTextOverrides(JSON.parse(s));      } catch { /* ignore */ }
+        try { const s = localStorage.getItem(TRANSFORM_STORAGE_KEY); if (s) setImageTransformsState(JSON.parse(s)); } catch { /* ignore */ }
+        try { const s = localStorage.getItem(LAYOUT_STORAGE_KEY);    if (s) setHeroLayoutsState(JSON.parse(s));    } catch { /* ignore */ }
+      });
   }, []);
 
   // ── Persist imageOverrides ─────────────────────────────────
