@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #000B58;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-body: var(--font-figtree);
+  --font-heading: var(--font-red-hat-mono);
+}
+
+body[data-typo='a'] {
+  --font-body: var(--font-figtree);
+  --font-heading: var(--font-red-hat-mono);
+}
+
+body[data-typo='b'] {
+  --font-body: var(--font-manrope);
+  --font-heading: var(--font-space-grotesk);
+}
+
+body[data-typo='c'] {
+  --font-body: var(--font-ibm-plex-sans);
+  --font-heading: var(--font-sora);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #ffffff;
+    --foreground: #000B58;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body), Figtree, Arial, sans-serif;
+  font-weight: 300;
+  @apply antialiased;
+}
+
+h1,
+.h1 {
+  font-family: var(--font-heading), "Red Hat Mono", Impact, sans-serif;
+  font-weight: 400;
+  @apply scroll-m-20 text-4xl tracking-tight lg:text-5xl text-[#000B58];
+}
+
+h2,
+.h2 {
+  font-family: var(--font-heading), "Red Hat Mono", Impact, sans-serif;
+  font-weight: 400;
+  @apply scroll-m-20 text-3xl tracking-tight first:mt-0 text-[#000B58];
+}
+
+h3,
+.h3 {
+  font-family: var(--font-heading), "Red Hat Mono", Impact, sans-serif;
+  font-weight: 400;
+  @apply scroll-m-20 text-2xl tracking-tight text-[#000B58];
+}
+
+h4,
+.h4 {
+  font-family: var(--font-heading), "Red Hat Mono", Impact, sans-serif;
+  font-weight: 400;
+  @apply scroll-m-20 text-xl tracking-tight text-[#000B58];
+}
+
+p,
+.p {
+  font-family: var(--font-body), Figtree, Arial, sans-serif;
+  font-weight: 300;
+  @apply leading-7 text-base text-[#1A1A1A];
+}
+
+blockquote,
+.blockquote {
+  @apply mt-6 border-l-4 border-[#000B58]/20 pl-6 italic text-[#000B58];
+}
+
+.lead {
+  @apply text-xl text-[#000B58]/80;
+}
+
+.large {
+  @apply text-lg font-semibold text-[#000B58];
+}
+
+.small {
+  @apply text-sm font-medium leading-none text-[#000B58];
+}
+
+.muted {
+  @apply text-sm text-[#000B58]/70;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}

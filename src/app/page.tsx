@@ -1,0 +1,958 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Lightbulb, Package, Printer, ChevronDown, Play } from 'lucide-react';
+import { useCarousel, useSolutions, useRealisations } from '@/hooks/use-api';
+import { CarouselSlide, Realisation } from '@/types/api';
+import { RealisationCard } from '@/components/RealisationCard';
+import { EditableImage } from '@/components/EditableImage';
+import { EditableText } from '@/components/EditableText';
+import { useEditorCarousel } from '@/hooks/use-editor-carousel';
+import { useEditor } from '@/components/EditorWrapper';
+
+// Fallback carousel data
+const fallbackCarouselItems: CarouselSlide[] = [
+  {
+    id: '1',
+    title: "PLV, ILV & Packaging pour la pharmacie et la cosmétique",
+    subtitle: "De la conception à la fabrication série, avec exigence de qualité et de délais",
+    imageUrl: "/image/selecta/hero/hero-01-collage.jpg",
+    videoUrl: undefined,
+    ctaText: "Découvrir nos solutions",
+    ctaLink: "/solutions",
+    order: 1,
+    isActive: true,
+    locale: 'fr',
+  },
+  {
+    id: '2',
+    title: "Un partenaire technique à l’écoute et réactif",
+    subtitle: "Accompagnement bureau d’études, prototype, validation et industrialisation",
+    imageUrl: "/image/selecta/hero/hero-02.jpg",
+    videoUrl: undefined,
+    ctaText: "Lancer Devis 3D Studio",
+    ctaLink: "/simulateur",
+    order: 2,
+    isActive: true,
+    locale: 'fr',
+  },
+  {
+    id: '3',
+    title: "Devis 3D Studio pour cadrer rapidement votre besoin",
+    subtitle: "Pré-configurez vos volumes et transmettez un brief exploitable pour chiffrage",
+    imageUrl: "/image/selecta/hero/hero-03.jpg",
+    videoUrl: undefined,
+    ctaText: "Voir nos réalisations",
+    ctaLink: "/realisations",
+    order: 3,
+    isActive: true,
+    locale: 'fr',
+  },
+  {
+    id: '4',
+    title: "PLV et présentoirs orientés performance en point de vente",
+    subtitle: "Conception utile, structure robuste et impact visuel maîtrisé",
+    imageUrl: "/image/selecta/hero/hero-04.jpg",
+    videoUrl: undefined,
+    ctaText: "Découvrir nos solutions",
+    ctaLink: "/solutions",
+    order: 4,
+    isActive: true,
+    locale: 'fr',
+  },
+  {
+    id: '5',
+    title: "Fabrication série avec contrôle qualité et finitions premium",
+    subtitle: "Impression, découpe, assemblage et conditionnement selon vos contraintes",
+    imageUrl: "/image/selecta/hero/hero-05.jpg",
+    videoUrl: undefined,
+    ctaText: "Voir nos réalisations",
+    ctaLink: "/realisations",
+    order: 5,
+    isActive: true,
+    locale: 'fr',
+  },
+  {
+    id: '6',
+    title: "Activation retail multi-formats",
+    subtitle: "Comptoir, linéaire, ILV et PLV sol selon les objectifs enseigne",
+    imageUrl: "/image/selecta/hero/hero-06.png",
+    videoUrl: undefined,
+    ctaText: "Découvrir nos solutions",
+    ctaLink: "/solutions",
+    order: 6,
+    isActive: true,
+    locale: 'fr',
+  },
+  {
+    id: '7',
+    title: "Déploiement opérationnel de vos campagnes",
+    subtitle: "Du prototype au terrain avec un pilotage centralisé",
+    imageUrl: "/image/selecta/hero/hero-07.png",
+    videoUrl: undefined,
+    ctaText: "Nous contacter",
+    ctaLink: "/contact",
+    order: 7,
+    isActive: true,
+    locale: 'fr',
+  },
+];
+
+const fallbackRealisations: Realisation[] = [
+  {
+    id: 'fallback-1',
+    title: 'Corner Beauté Premium',
+    description: 'Installation PLV complète pour le lancement d’une nouvelle gamme de soins visage.',
+    client: 'LuxeSkin',
+    category: 'PLV',
+    images: ['/image/realisations/realisations-01.webp'],
+    featuredImage: '/image/realisations/realisations-01.webp',
+    year: 2024,
+    tags: ['Retail', 'Animation', 'Skincare'],
+    locale: 'fr',
+    isPublished: true,
+    createdAt: '2024-08-18T00:00:00Z',
+  },
+  {
+    id: 'fallback-2',
+    title: 'Présentoir parfumerie halo',
+    description: 'Structure autoportante avec éclairage intégré pour maximiser la visibilité en boutique.',
+    client: 'Elysée Parfums',
+    category: 'Packaging',
+    images: ['/image/realisations/realisations-02.webp'],
+    featuredImage: '/image/realisations/realisations-02.webp',
+    year: 2023,
+    tags: ['Lumière', 'Corner', 'Premium'],
+    locale: 'fr',
+    isPublished: true,
+    createdAt: '2023-11-04T00:00:00Z',
+  },
+  {
+    id: 'fallback-3',
+    title: 'Totems pharmacie modulaires',
+    description: 'Série de totems personnalisables pour les points de vente santé & bien-être.',
+    client: 'PharmaPlus',
+    category: 'Print',
+    images: ['/image/realisations/realisations-03.webp'],
+    featuredImage: '/image/realisations/realisations-03.webp',
+    year: 2024,
+    tags: ['Pharmacie', 'Module', 'Point de vente'],
+    locale: 'fr',
+    isPublished: true,
+    createdAt: '2024-05-22T00:00:00Z',
+  },
+  {
+    id: 'fallback-4',
+    title: 'Experience bar make-up',
+    description: 'Espace immersif multi-écrans pour présenter une collection de maquillage.',
+    client: 'GlowLab',
+    category: 'Devis 3D Studio',
+    images: ['/image/realisations/realisations-04.webp'],
+    featuredImage: '/image/realisations/realisations-04.webp',
+    year: 2022,
+    tags: ['3D', 'Configuration', 'Devis'],
+    locale: 'fr',
+    isPublished: true,
+    createdAt: '2022-09-10T00:00:00Z',
+  },
+];
+
+const heroPanelContent: Record<string, { badge: string; details: string; points: string[]; metric: string }> = {
+  '1': {
+    badge: 'PLV & Packaging',
+    details:
+      'Conception et fabrication de dispositifs de vente et de communication commerciale pour les marques exigeantes.',
+    points: ['PLV de comptoir et de sol', 'ILV et animation retail', 'Packaging et habillages'],
+    metric: 'Expertise métier depuis 1996',
+  },
+  '2': {
+    badge: 'Méthode projet',
+    details:
+      'Une organisation complète, de l’étude du besoin à la mise en place en point de vente, avec suivi opérationnel.',
+    points: ['Brief + étude technique', 'Prototypage et tests', 'Production, co-packing, logistique'],
+    metric: 'Respect des engagements qualité/délai',
+  },
+  '3': {
+    badge: 'Devis 3D Studio',
+    details:
+      'Accélérez le cadrage de votre projet grâce à une configuration 3D claire transmise au bureau d’études.',
+    points: ['Paramètres dimensions', 'Capacité et implantation produit', 'Demande de devis structurée'],
+    metric: 'Du concept à la faisabilité en quelques clics',
+  },
+};
+
+const heroTextGroups = [
+  {
+    title: "À la croisée des solutions",
+    subtitle: "Multi-pôles est une société commerciale indépendante d'imprimeur, cartonnier, fabricant, concepteur, volumiste et production multimédia.",
+    ctaText: "Découvrir nos solutions",
+    ctaLink: "/solutions",
+    panelKey: '1',
+  },
+  {
+    title: "Devis en ligne Studio 3D",
+    subtitle: "Pré-configurez votre projet, illustrez le besoin et transmettez un brief clair au bureau d’études",
+    ctaText: "Ouvrir Devis 3D Studio",
+    ctaLink: "/simulateur",
+    panelKey: '3',
+  },
+  {
+    title: "Plus de 300 experts à votre service",
+    subtitle: "Regroupant plus de 300 personnes sur sites spécialisés dans leur domaine à travers la France.",
+    ctaText: "Nous contacter",
+    ctaLink: "/contact",
+    panelKey: '2',
+  },
+  {
+    title: "Production et déploiement multi-réseaux",
+    subtitle: "PLV de comptoir, PLV de sol, ILV et packaging adaptés à vos contraintes retail",
+    ctaText: "Voir nos réalisations",
+    ctaLink: "/realisations",
+    panelKey: '1',
+  },
+];
+
+const solutionVisualsBySlug: Record<string, { image: string; tags: string[] }> = {
+  plv: {
+    image: '/image/selecta/savoir-faire/sf-plv.png',
+    tags: ['Comptoir', 'Sol', 'Linéaire'],
+  },
+  packaging: {
+    image: '/image/selecta/savoir-faire/sf-packaging.png',
+    tags: ['Etuis', 'Coffrets', 'Calages'],
+  },
+  print: {
+    image: '/image/selecta/savoir-faire/sf-print.png',
+    tags: ['Offset', 'Numérique', 'Finitions'],
+  },
+  digital: {
+    image: '/image/selecta/savoir-faire/sf-studio.jpg',
+    tags: ['Configuration', '3D', 'Devis'],
+  },
+};
+
+const vitrineItems = [
+  { id: 'v1', title: 'PLV comptoir Saugella', image: '/image/selecta/vitrine/vitrine-plv-comptoir-01.jpg', tags: ['PLV', 'Comptoir'] },
+  { id: 'v2', title: 'PLV comptoir Innoxa', image: '/image/selecta/vitrine/vitrine-plv-comptoir-02.jpg', tags: ['PLV', 'Pharmacie'] },
+  { id: 'v3', title: 'PLV comptoir Sampar', image: '/image/selecta/vitrine/vitrine-plv-comptoir-03.jpg', tags: ['PLV', 'Cosmétique'] },
+  { id: 'v4', title: 'PLV sol Display', image: '/image/selecta/vitrine/vitrine-plv-sol-01.jpg', tags: ['PLV', 'Sol'] },
+  { id: 'v5', title: 'PLV sol Seba-Med', image: '/image/selecta/vitrine/vitrine-plv-sol-02.jpg', tags: ['PLV', 'Retail'] },
+  { id: 'v6', title: 'Linéaire Ultra-Levure', image: '/image/selecta/vitrine/vitrine-plv-lineaire-01.jpg', tags: ['ILV', 'Linéaire'] },
+  { id: 'v7', title: 'Coffret T.Leclerc', image: '/image/selecta/vitrine/vitrine-packaging-01.jpg', tags: ['Packaging', 'Coffret'] },
+  { id: 'v8', title: 'Packaging Fitoform', image: '/image/selecta/vitrine/vitrine-packaging-02.jpg', tags: ['Packaging', 'Pharma'] },
+  { id: 'v9', title: 'Packaging Chronomag', image: '/image/selecta/vitrine/vitrine-packaging-03.jpg', tags: ['Packaging', 'Etui'] },
+  { id: 'v10', title: 'Packaging Gravelline', image: '/image/selecta/vitrine/vitrine-packaging-04.jpg', tags: ['Packaging', 'Gamme'] },
+  { id: 'v11', title: 'ILV silhouette Topicrem', image: '/image/selecta/vitrine/vitrine-ilv-01.jpg', tags: ['ILV', 'Vitrine'] },
+  { id: 'v12', title: 'ILV Benegast', image: '/image/selecta/vitrine/vitrine-ilv-02.jpg', tags: ['ILV', 'Pharmacie'] },
+];
+
+const baseSolutionCategories = [
+  {
+    slug: 'plv',
+    title: 'PLV',
+    icon: Lightbulb,
+    description:
+      "PLV de comptoir et PLV de sol: conception structurelle, prototypage et fabrication série.",
+    link: '/solutions#plv',
+  },
+  {
+    slug: 'packaging',
+    title: 'Packaging',
+    icon: Package,
+    description:
+      'Etuis, coffrets, sleeves et calages avec contraintes logistiques et retail intégrées.',
+    link: '/solutions#packaging',
+  },
+  {
+    slug: 'print',
+    title: 'Print',
+    icon: Printer,
+    description:
+      "Impression offset/numérique, dorure, vernis sélectif, gaufrage, découpe et façonnage.",
+    link: '/solutions#print',
+  },
+  {
+    slug: 'digital',
+    title: 'Devis 3D Studio',
+    icon: Play,
+    description: 'Configuration 3D de votre projet et transmission directe au bureau d’études pour chiffrage.',
+    link: '/simulateur',
+  },
+];
+
+const faqItems = [
+  {
+    question: 'Quelle est votre expertise sectorielle ?',
+    answer:
+      'Nous intervenons sur les secteurs cosmétique, dermocosmétique et pharmacie avec des PLV comptoir/sol et des packagings techniques adaptés aux contraintes retail.',
+  },
+  {
+    question: 'Proposez-vous des solutions sur-mesure ?',
+    answer:
+      'Oui. Nous partons de votre brief pour définir dimensions, matériaux, process d’impression, finitions et conditionnement, puis nous validons via prototype avant production série.',
+  },
+  {
+    question: 'Comment l’innovation 3D intervient-elle dans vos projets ?',
+    answer:
+      'Le Devis 3D Studio permet de configurer les volumes et la capacité produit en amont. Votre configuration est transmise pour étude technique et devis.',
+  },
+  {
+    question: 'Êtes-vous engagés dans une démarche éco-responsable ?',
+    answer:
+      'Nous privilégions les matières recyclables, l’optimisation des développés, et des choix de fabrication limitant la matière et les transports inutiles.',
+  },
+];
+
+// ─── Drag-divider entre image et carte ──────────────────────
+function SlideDivider({ layoutKey, cardWidth, setHeroLayout }: {
+  layoutKey: string; cardWidth: number; setHeroLayout: (k: string, w: number) => void;
+}) {
+  const dragRef = useRef<{ startX: number; startW: number } | null>(null);
+  const [active, setActive] = useState(false);
+  return (
+    <div
+      style={{ width: '14px', flexShrink: 0, alignSelf: 'stretch', cursor: 'ew-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 35, userSelect: 'none' }}
+      title={`Glisser pour redimensionner (${cardWidth}px)`}
+      onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); dragRef.current = { startX: e.clientX, startW: cardWidth }; setActive(true); }}
+      onPointerMove={(e) => { if (!dragRef.current) return; const delta = -(e.clientX - dragRef.current.startX); setHeroLayout(layoutKey, Math.max(260, Math.min(640, dragRef.current.startW + delta))); }}
+      onPointerUp={() => { dragRef.current = null; setActive(false); }}
+      onPointerLeave={() => { dragRef.current = null; setActive(false); }}
+    >
+      <div style={{ width: '4px', height: '52px', borderRadius: '4px', backgroundColor: active ? '#000B58' : 'rgba(0,11,88,0.3)', boxShadow: active ? '0 0 0 4px rgba(0,11,88,0.12)' : 'none', transition: 'all 0.15s' }} />
+    </div>
+  );
+}
+
+export default function Home() {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [activeFaq, setActiveFaq] = useState<number | null>(0);
+  const vitrineScrollRef = useRef<HTMLDivElement | null>(null);
+
+  const presentationVideoUrl = process.env.NEXT_PUBLIC_PRESENTATION_VIDEO_URL;
+  const presentationVideoPoster = process.env.NEXT_PUBLIC_PRESENTATION_VIDEO_POSTER;
+  const presentationVideoType = process.env.NEXT_PUBLIC_PRESENTATION_VIDEO_TYPE ?? 'video/mp4';
+
+  // Fetch data from API
+  const { data: carouselData, loading: carouselLoading } = useCarousel('fr');
+  const { data: solutionsData, loading: solutionsLoading } = useSolutions('fr');
+  const { data: realisationsData, loading: realisationsLoading } = useRealisations('fr');
+
+  const baseRealisations = Array.isArray(realisationsData) && realisationsData.length > 0
+    ? realisationsData
+    : fallbackRealisations;
+
+  const showcaseRealisations = baseRealisations
+    .filter((item) => item?.isPublished)
+    .sort((a, b) => {
+      const aTime = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
+    })
+    .slice(0, 8);
+
+  // Use API data or fallback
+  const carouselItems = Array.isArray(carouselData) && carouselData.length > 0
+    ? carouselData
+      .filter((item) => item?.isActive && item?.imageUrl)
+      .sort((a, b) => (a?.order ?? 0) - (b?.order ?? 0))
+    : fallbackCarouselItems;
+
+  const safeCarouselLength = carouselItems.length || fallbackCarouselItems.length;
+
+  const { currentSlide, nextSlide, prevSlide, goToSlide, editorMode } = useEditorCarousel({
+    totalSlides: safeCarouselLength,
+    intervalMs: 5000,
+  });
+  const { heroLayouts, setHeroLayout } = useEditor();
+
+  const displayedSolutions = baseSolutionCategories.map((base) => {
+    const match = Array.isArray(solutionsData)
+      ? solutionsData.find((solution) => {
+        const slug = solution?.slug?.toLowerCase();
+        const title = solution?.title?.toLowerCase();
+        return (
+          slug === base.slug ||
+          title === base.title.toLowerCase()
+        );
+      })
+      : undefined;
+
+    return {
+      id: match?.id ?? base.slug,
+      title: base.title,
+      icon: base.icon,
+      description: base.description,
+      link: base.link,
+      image: solutionVisualsBySlug[base.slug]?.image,
+      tags: solutionVisualsBySlug[base.slug]?.tags ?? [],
+      order: match?.order ?? 0,
+    };
+  });
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const getHeroTextGroup = (slideIndex: number) => {
+    const groupIndex = Math.floor(slideIndex / 3);
+    return heroTextGroups[groupIndex] ?? heroTextGroups[heroTextGroups.length - 1];
+  };
+
+  const scrollVitrine = (direction: 'left' | 'right') => {
+    if (!vitrineScrollRef.current) return;
+    const distance = Math.round(vitrineScrollRef.current.clientWidth * 0.82);
+    vitrineScrollRef.current.scrollBy({
+      left: direction === 'right' ? distance : -distance,
+      behavior: 'smooth',
+    });
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen bg-white">
+      {/* Hero Carousel — plein écran moins le header */}
+      <section className="relative mt-3 md:mt-4 h-[88vh] min-h-[440px] w-full overflow-hidden bg-white">
+        {carouselItems.map((item, index) => {
+          const textGroup = getHeroTextGroup(index);
+          const layoutKey = `slide-layout-${index}`;
+          const cardWidth = (heroLayouts ?? {})[layoutKey] ?? 420;
+          return (
+            <div
+              key={item?.id ?? index}
+              className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+            >
+              <div className="absolute inset-0 flex items-center px-4 md:px-10 py-4">
+                <div className="w-full h-full flex items-stretch gap-3 md:gap-4">
+                  {/* ── Image ── */}
+                  <div className={`flex-1 relative rounded-xl overflow-hidden bg-white ${editorMode ? 'z-30' : ''}`}>
+                    <EditableImage
+                      editorKey={`hero-${index}`}
+                      src={item?.imageUrl ?? '/image/placeholder.jpg'}
+                      alt={item?.title ?? 'Slide'}
+                      fill
+                      priority={index === 0}
+                      sizes="(max-width: 768px) 100vw, 66vw"
+                      className="object-contain"
+                    />
+                  </div>
+                  {/* ── Drag divider (editor only) ── */}
+                  {editorMode && <SlideDivider layoutKey={layoutKey} cardWidth={cardWidth} setHeroLayout={setHeroLayout} />}
+                  {/* ── Carte texte ── */}
+                  <div
+                    className={`hidden md:flex flex-col shrink-0 transform transition-all duration-300 ease-out ${isScrolled ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100 translate-y-0'}`}
+                    style={{ width: `${cardWidth}px` }}
+                  >
+                    <motion.div className="h-full" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}>
+                      <div className="flex flex-col h-full rounded-2xl border border-[#000B58]/15 bg-white/88 px-5 py-6 shadow-[0_20px_48px_-36px_rgba(0,11,88,0.55)] backdrop-blur-sm md:px-6 md:py-7 text-[#000B58]">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                          <span className="inline-flex rounded-md border border-[#000B58]/20 bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#000B58]/75">
+                            {(heroPanelContent[textGroup.panelKey] ?? heroPanelContent['1'])?.badge ?? 'Savoir-faire'}
+                          </span>
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#000B58]/55">
+                            Slide {(index + 1).toString().padStart(2, '0')}
+                          </span>
+                        </div>
+                        <EditableText
+                          editorKey={`hero-title-${index}`}
+                          defaultValue={textGroup.title}
+                          as="h1"
+                          className="text-3xl md:text-[2.4rem] md:leading-[1.05] font-bold mb-3 text-[#000B58]"
+                        />
+                        <EditableText
+                          editorKey={`hero-subtitle-${index}`}
+                          defaultValue={textGroup.subtitle}
+                          as="p"
+                          className="text-base mb-4 text-[#000B58]/78"
+                          multiline
+                        />
+                        <EditableText
+                          editorKey={`hero-details-${index}`}
+                          defaultValue={(heroPanelContent[textGroup.panelKey] ?? heroPanelContent['1'])?.details ?? ''}
+                          as="p"
+                          className="text-sm leading-relaxed text-[#000B58]/72 mb-4"
+                          multiline
+                        />
+                        <div className="mb-5 grid grid-cols-1 gap-2">
+                          {((heroPanelContent[textGroup.panelKey] ?? heroPanelContent['1'])?.points ?? []).map((point, pointIndex) => (
+                            <span key={pointIndex} className="inline-flex items-center gap-2 text-sm text-[#000B58]/78">
+                              <span className="h-1.5 w-1.5 rounded-full bg-[#000B58]/65 shrink-0" />
+                              <EditableText
+                                editorKey={`hero-point-${index}-${pointIndex}`}
+                                defaultValue={point}
+                                as="span"
+                                className="text-sm text-[#000B58]/78"
+                              />
+                            </span>
+                          ))}
+                        </div>
+                        <EditableText
+                          editorKey={`hero-metric-${index}`}
+                          defaultValue={(heroPanelContent[textGroup.panelKey] ?? heroPanelContent['1'])?.metric ?? ''}
+                          as="p"
+                          className="mb-6 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#000B58]/55"
+                        />
+                        <div className="mt-auto">
+                          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                            <div className="inline-flex rounded-lg border border-[#000B58] px-5 py-2.5 sm:px-6 sm:py-3 transition-colors hover:bg-[#000B58]/5">
+                              <Link
+                                href={textGroup?.ctaLink ?? item?.ctaLink ?? '#'}
+                                className="font-semibold text-sm sm:text-base text-[#000B58] hover:text-[#000B58]/75 transition-colors"
+                              >
+                                {textGroup?.ctaText ?? item?.ctaText ?? 'En savoir plus'}
+                              </Link>
+                            </div>
+                          </motion.div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Carousel Controls */}
+        <div
+          className={`absolute bottom-6 left-4 md:left-10 z-30 flex items-center gap-3 transform transition-all duration-300 ease-out ${isScrolled ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100 translate-y-0'
+            }`}
+        >
+          <button
+            onClick={prevSlide}
+            className="rounded-lg bg-white p-2 sm:p-2.5 text-[#000B58] shadow-lg shadow-[#000B58]/20 transition-all"
+            aria-label="Previous slide"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="#000B58">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            onClick={nextSlide}
+            className="rounded-lg bg-white p-2 sm:p-2.5 text-[#000B58] shadow-lg shadow-[#000B58]/20 transition-all"
+            aria-label="Next slide"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="#000B58">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <span className="h-4 w-px bg-[#000B58]/20 mx-1" />
+          {carouselItems.map((_, index) => (
+            <motion.button
+              key={index}
+              onClick={() => goToSlide(index)}
+              aria-label={`Go to slide ${index + 1}`}
+              className={`h-3 w-3 rounded-[4px] ${index === currentSlide ? 'bg-[#000B58]' : 'bg-[#000B58]/25'
+                }`}
+              layout
+              transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+              animate={{ scale: index === currentSlide ? 1.6 : 1 }}
+              whileHover={{ scale: 1.25 }}
+            />
+          ))}
+        </div>
+      </section>
+      {/* Reel of recent réalisations */}
+      <section className="bg-white py-20">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8">
+          <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <div>
+                <span className="mb-3 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-[#000B58]/70">
+                  Explorez nos réalisations
+                </span>
+                <h2 className="text-3xl md:text-4xl font-bold text-[#000B58]">
+                  Un aperçu de nos derniers projets
+                </h2>
+                <p className="mt-3 max-w-2xl text-base text-[#000B58]/70">
+                  Découvrez comment nous sublimons les marques cosmétique et pharma avec des dispositifs PLV impactants. Faites défiler pour vous inspirer.
+                </p>
+              </div>
+              <Link
+                href="/realisations"
+                className="inline-flex items-center gap-2 self-start text-sm font-semibold text-[#000B58] transition-colors hover:text-[#000B58]/70"
+              >
+                Voir toutes nos réalisations
+                <span aria-hidden="true" className="text-base leading-none transition-transform duration-200 group-hover:translate-x-0.5">
+                  →
+                </span>
+              </Link>
+            </div>
+
+            <div className="h-px w-full bg-[#000B58]/10" />
+
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {realisationsLoading ? (
+                Array.from({ length: 4 }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-[24px] border border-[#000B58]/10 bg-white p-4 shadow-sm"
+                  >
+                    <div className="h-40 rounded-2xl bg-[#000B58]/5 animate-pulse" />
+                    <div className="mt-4 h-4 w-3/4 rounded-full bg-[#000B58]/10 animate-pulse" />
+                    <div className="mt-3 h-4 w-1/2 rounded-full bg-[#000B58]/10 animate-pulse" />
+                  </div>
+                ))
+              ) : showcaseRealisations.length === 0 ? (
+                <div className="w-full rounded-2xl border border-dashed border-[#000B58]/20 bg-[#000B58]/5 p-8 text-center text-[#000B58]/60">
+                  Aucune réalisation disponible pour le moment. Revenez bientôt pour découvrir nos projets.
+                </div>
+              ) : (
+                showcaseRealisations.map((realisation, index) => (
+                  <RealisationCard key={realisation.id ?? index} realisation={realisation} index={index} editorKey={`real-${index}`} />
+                ))
+              )}
+            </div>
+
+            <div className="flex justify-end text-sm text-[#000B58]/50">
+              <Link href="/contact" className="font-semibold text-[#000B58] hover:text-[#000B58]/70 transition-colors inline-flex items-center gap-2">
+                Discutons de votre projet
+                <span aria-hidden="true" className="text-base leading-none transition-transform duration-200 hover:translate-x-0.5">
+                  →
+                </span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section className="py-20 bg-[#000B58]">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2
+              className="text-4xl font-bold mb-4"
+              style={{ color: '#FFFFFF' }}
+            >
+              Nos savoir-faire
+            </h2>
+            <p
+              className="text-xl max-w-3xl mx-auto"
+              style={{ color: '#FFFFFF' }}
+            >
+              Depuis 1996, Multi-Pôles accompagne les marques en pharmacie, parapharmacie et cosmétique:
+              conseil, création, fabrication, co-packing et déploiement terrain.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {solutionsLoading ? (
+              // Loading skeleton
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="bg-white rounded-lg p-8 border border-gray-100 animate-pulse">
+                  <div className="h-12 w-12 bg-gray-200 rounded mb-4"></div>
+                  <div className="h-6 bg-gray-200 rounded mb-3 w-3/4"></div>
+                  <div className="h-16 bg-gray-200 rounded mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              ))
+            ) : (
+              displayedSolutions.map((solution) => {
+                const Icon = solution.icon;
+                return (
+                  <motion.div
+                    key={solution.id}
+                    whileHover={{ y: -8, scale: 1.01 }}
+                    transition={{ duration: 0.25 }}
+                    className="group relative overflow-hidden rounded-2xl bg-white/95 p-8 shadow-lg shadow-black/10 border border-white/60 text-[#000B58] transition-all duration-300 hover:-translate-y-3 hover:shadow-2xl hover:border-yellow/70"
+                  >
+                    <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-yellow/80 via-yellow/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="flex flex-col h-full">
+                      <div className="mb-5 overflow-hidden rounded-xl border border-[#000B58]/10 bg-[#f5f5f2]">
+                        <div className="relative aspect-[4/3] w-full">
+                          <EditableImage
+                            editorKey={`solution-${solution.id}`}
+                            src={solution.image ?? '/image/placeholder.jpg'}
+                            alt={solution.title}
+                            fill
+                            sizes="(max-width: 1024px) 100vw, 25vw"
+                            className="object-contain p-3"
+                          />
+                        </div>
+                      </div>
+                      <div className="mb-5 flex items-center justify-start">
+                        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow/20">
+                          <Icon className="w-6 h-6 text-[#000B58]" />
+                        </span>
+                      </div>
+                      <h3 className="text-2xl font-bold mb-3">{solution.title}</h3>
+                      <p className="text-[#000B58]/70 mb-6 flex-1 leading-relaxed">{solution.description}</p>
+                      <div className="mb-6 flex flex-wrap gap-2">
+                        {solution.tags.map((tag) => (
+                          <span
+                            key={`${solution.id}-${tag}`}
+                            className="rounded-md border border-[#000B58]/15 bg-[#000B58]/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#000B58]/70"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                      <Link
+                        href={solution.link}
+                        className="mt-auto inline-flex items-center gap-2 text-sm font-semibold text-[#000B58] group-hover:text-yellow transition-colors"
+                      >
+                        En savoir plus
+                        <span aria-hidden="true" className="text-base leading-none transition-transform duration-200 group-hover:translate-x-0.5">
+                          →
+                        </span>
+                      </Link>
+                    </div>
+                  </motion.div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Vitrine carousel */}
+      <section className="bg-white py-20">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8">
+          <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <div>
+              <span className="mb-3 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-[#000B58]/65">
+                Vitrine
+              </span>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#000B58]">Réalisations Multi-Pôles</h2>
+              <p className="mt-3 max-w-3xl text-base text-[#000B58]/70">
+                Une sélection de réalisations issues de vos dossiers: PLV, ILV et packaging,
+                présentée dans un format homogène pour lecture claire par secteur d’intervention.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => scrollVitrine('left')}
+                className="rounded-lg border border-[#000B58]/20 bg-white p-2.5 text-[#000B58] transition-colors hover:bg-[#000B58]/5"
+                aria-label="Défiler les réalisations vers la gauche"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollVitrine('right')}
+                className="rounded-lg border border-[#000B58]/20 bg-white p-2.5 text-[#000B58] transition-colors hover:bg-[#000B58]/5"
+                aria-label="Défiler les réalisations vers la droite"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div
+            ref={vitrineScrollRef}
+            className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {vitrineItems.map((item) => (
+              <article
+                key={item.id}
+                className="min-w-[300px] max-w-[300px] snap-start rounded-2xl border border-[#000B58]/12 bg-white p-4 shadow-sm md:min-w-[360px] md:max-w-[360px]"
+              >
+                <div className="relative mb-4 overflow-hidden rounded-xl border border-[#000B58]/8 bg-[#f7f7f4]">
+                  <div className="relative aspect-[16/10] w-full">
+                    <EditableImage
+                      editorKey={`vitrine-${item.id}`}
+                      src={item.image}
+                      alt={item.title}
+                      fill
+                      sizes="(max-width: 768px) 90vw, 360px"
+                      className="object-contain p-3"
+                    />
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-[#000B58]">{item.title}</h3>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {item.tags.map((tag) => (
+                    <span
+                      key={`${item.id}-${tag}`}
+                      className="rounded-md border border-[#000B58]/15 bg-[#000B58]/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#000B58]/70"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Presentation Video */}
+      <section className="bg-white py-20">
+        <div className="container mx-auto flex flex-col gap-12 px-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="w-full max-w-xl">
+            <motion.span
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 rounded-lg border border-[#000B58]/15 bg-[#000B58]/5 px-4 py-1 text-sm font-semibold uppercase tracking-[0.18em] text-[#000B58]"
+            >
+              En vidéo
+            </motion.span>
+            <motion.h2
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.1 }}
+              viewport={{ once: true }}
+              className="mt-6 text-4xl font-bold text-[#000B58]"
+            >
+              Découvrez Multi-Pôles en images
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="mt-4 text-lg leading-relaxed text-[#000B58]/70"
+            >
+              Parcourez nos réalisations en contexte point de vente: PLV de comptoir, PLV de sol, packaging primaire/secondaire
+              et opérations de conditionnement prêtes à l’expédition.
+            </motion.p>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            viewport={{ once: true }}
+            className="relative w-full max-w-4xl overflow-hidden rounded-3xl border-2 border-[#000B58]/10 bg-[#000B58]/5 shadow-[0_30px_80px_-40px_rgba(0,11,88,0.35)]"
+          >
+            {presentationVideoUrl ? (
+              <video
+                controls
+                preload="metadata"
+                poster={presentationVideoPoster ?? undefined}
+                className="aspect-video w-full bg-black object-cover"
+              >
+                <source src={presentationVideoUrl} type={presentationVideoType} />
+                Votre navigateur ne prend pas en charge la lecture vidéo.
+              </video>
+            ) : (
+              <div className="flex aspect-video w-full flex-col items-center justify-center gap-4 bg-[#000B58]/10 p-8 text-center text-[#000B58]/70">
+                <span className="text-xl font-semibold">Vidéo en cours d'ajout</span>
+                <p className="max-w-md text-sm">
+                  Ajoutez l'URL de votre vidéo dans la variable d'environnement <code className="rounded bg-[#000B58]/10 px-2 py-1">NEXT_PUBLIC_PRESENTATION_VIDEO_URL</code> pour afficher ce contenu.
+                </p>
+              </div>
+            )}
+
+            <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-white/30" />
+          </motion.div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="bg-white py-20">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+            className="mx-auto max-w-3xl text-center"
+          >
+            <span className="inline-flex items-center gap-2 rounded-lg border border-[#000B58]/15 bg-[#000B58]/5 px-4 py-1 text-sm font-semibold uppercase tracking-[0.18em] text-[#000B58]">
+              FAQ
+            </span>
+            <h2 className="mt-6 text-4xl font-bold text-[#000B58]">Pourquoi choisir Multi-Pôles&nbsp;?</h2>
+            <p className="mt-3 text-lg text-[#000B58]/70">
+              Découvrez en un clin d’œil les réponses aux questions que nos clients nous posent le plus souvent à propos de notre approche et de notre accompagnement.
+            </p>
+          </motion.div>
+
+          <div className="mx-auto mt-12 max-w-4xl space-y-4">
+            {faqItems.map((item, index) => {
+              const isOpen = activeFaq === index;
+              return (
+                <motion.div
+                  key={item.question}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: index * 0.05 }}
+                  viewport={{ once: true }}
+                  className="rounded-2xl border border-[#000B58]/10 bg-white shadow-[0_18px_45px_-30px_rgba(0,11,88,0.45)]"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setActiveFaq(isOpen ? null : index)}
+                    className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition-colors hover:bg-[#000B58]/5"
+                  >
+                    <span className="text-lg font-semibold text-[#000B58]">{item.question}</span>
+                    <ChevronDown
+                      className={`h-5 w-5 text-[#000B58] transition-transform duration-300 ${isOpen ? 'rotate-180' : 'rotate-0'
+                        }`}
+                    />
+                  </button>
+                  <div
+                    className={`grid transition-all duration-300 ease-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                      }`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="px-6 pb-6 text-base leading-relaxed text-[#000B58]/80">{item.answer}</div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA - Quote */}
+      <section
+        className="py-20 bg-navy text-white"
+        style={{ backgroundColor: '#000B58' }}
+      >
+        <div className="container mx-auto px-4 text-center">
+          <h2
+            className="text-4xl font-bold mb-6"
+            style={{ color: '#FFFFFF' }}
+          >
+            Prêt à concrétiser votre projet ?
+          </h2>
+          <p
+            className="text-xl mb-8 max-w-2xl mx-auto"
+            style={{ color: '#FFFFFF' }}
+          >
+            Contactez-nous dès aujourd'hui pour discuter de votre projet et obtenir un devis personnalisé.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Link
+                href="/devis"
+                className="bg-white text-[#000B58] px-8 py-3 rounded-md font-semibold border border-white hover:bg-white/80 transition-colors"
+              >
+                Demander un devis
+              </Link>
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Link
+                href="/contact"
+                className="bg-transparent text-white px-8 py-3 rounded-md font-semibold border border-white hover:bg-white/10 transition-colors"
+              >
+                Nous contacter
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
