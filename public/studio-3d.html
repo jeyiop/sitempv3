@@ -1370,21 +1370,34 @@ function applyThemeToScene(mode = currentMode) {
 }
 
 window.applyVisualPreset = function(preset) {
-  if (!THEMES[preset]) return;
-  Object.assign(V, THEMES[preset], { preset });
-  document.body.dataset.uiTheme = V.uiMode;
-  document.body.dataset.visualPreset = preset;
-  const gcol = hexToInt(V.grid);
-  if (Array.isArray(gridHelper.material)) {
-    gridHelper.material.forEach(m => m.color.setHex(gcol));
-  } else {
-    gridHelper.material.color.setHex(gcol);
+  try {
+    if (!THEMES[preset]) { showToast('Preset inconnu: ' + preset); return; }
+    Object.assign(V, THEMES[preset], { preset });
+    document.body.dataset.uiTheme = V.uiMode;
+    document.body.dataset.visualPreset = preset;
+    // Update CSS --bg variable so body background matches scene
+    document.documentElement.style.setProperty('--bg', V.bg);
+    document.documentElement.style.setProperty('--surface',
+      V.uiMode === 'day' ? 'rgba(255,255,255,0.97)' : 'rgba(12,12,22,0.92)');
+    document.documentElement.style.setProperty('--primary',
+      V.uiMode === 'day' ? '#111f31' : '#E0E0FF');
+    document.documentElement.style.setProperty('--border',
+      V.uiMode === 'day' ? 'rgba(0,0,0,0.12)' : 'rgba(0,255,255,0.15)');
+    const gcol = hexToInt(V.grid);
+    if (Array.isArray(gridHelper.material)) {
+      gridHelper.material.forEach(m => m.color.setHex(gcol));
+    } else {
+      gridHelper.material.color.setHex(gcol);
+    }
+    document.getElementById('themeMenu').classList.remove('open');
+    document.getElementById('btnThemes').classList.remove('open');
+    applyThemeToScene(currentMode);
+    syncStyleUI();
+    if (currentMode === 'plv') rebuildPLV(); else rebuildPack();
+  } catch(err) {
+    showToast('Erreur theme: ' + err.message);
+    console.error('applyVisualPreset error:', err);
   }
-  document.getElementById('themeMenu').classList.remove('open');
-  document.getElementById('btnThemes').classList.remove('open');
-  applyThemeToScene(currentMode);
-  syncStyleUI();
-  if (currentMode === 'plv') rebuildPLV(); else rebuildPack();
 };
 
 function initVisualControls() {
@@ -1394,7 +1407,10 @@ function initVisualControls() {
     document.getElementById('themeMenu').classList.remove('open');
     document.getElementById('btnThemes').classList.remove('open');
   });
-  window.applyVisualPreset(V.preset);
+  // Init body attrs without overwriting CSS bg
+  document.body.dataset.uiTheme = V.uiMode;
+  document.body.dataset.visualPreset = V.preset;
+  syncStyleUI();
 }
 
 function initTags() {

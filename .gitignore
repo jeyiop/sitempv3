@@ -40,3 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Images (trop lourdes pour GitHub - servies en local)
+public/image/
+public/studio-3d-test.html
